@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: nodejs-app
-        image: "supriyabnkr/project2:v1"
+        image: "supriyabnkr/project2:latest"
         ports:
           - containerPort: 5000
 ---
