@@ -1,0 +1,49 @@
+pipeline{
+    agent any
+    environment{
+         dockerhub=credentials('dockerhub')
+          EKS_CLUSTER = 'my-cluster'
+        AWS_DEFAULT_REGION = 'ap-south-1'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        IMAGE_REPO = 'your_ecr_repo_url'
+
+    }
+  stages{
+      stage("Checkout from Git"){
+          steps{
+              checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[credentialsId: 'github', url: 'https://github.com/supriyabnkr/Jenkinsproject2.git']])
+          }
+      }
+      stage("docker Image"){
+          steps{
+              sh 'docker build -t supriyabnkr/${IMAGE_REPO}:${IMAGE_TAG} .'
+          }
+      }
+      stage("Publish Image to doker hub"){
+          steps{
+              sh '''docker image ls
+                    docker logout
+                  '''
+              sh 'echo $dockerhub_PSW | docker login -u $dockerhub_USR --password-stdin docker.io'
+              sh 'docker push supriyabnkr/${IMAGE_REPO}:${IMAGE_TAG}'
+          }
+      }
+      
+      stage('Deploying App to Kubernetes') {
+                 steps {
+                     script{
+                         
+                      withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'awscred']]) {
+                      sh """
+                          aws eks update-kubeconfig --name ${EKS_CLUSTER} --region ${AWS_DEFAULT_REGION}
+                          cat nodejs-app-deploy.yml
+                          kubectl apply -f nodejs-app-deploy.yml
+                          kubectl get svc
+                      """
+            }
+                     }    
+        }
+    }
+
+  }
+}
