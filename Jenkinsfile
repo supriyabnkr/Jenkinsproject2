@@ -17,20 +17,6 @@ pipeline {
             }
         }
         
-        stage('Publish Artifacts To Dockerhub....') {
-            steps {
-                sh 'docker image ls'
-                sh 'docker logout'
-                sh 'echo $dockerhub_PSW | docker login -u $dockerhub_USR --password-stdin docker.io'
-                sh 'docker push pdockersavant/devops-demo:latest'
-            }
-        }
-        stage('Deploying App to Kubernetes') {
-            steps {
-                script {
-                     kubernetesDeploy(configs: "nodejs-app-deploy.yml", kubeconfigId: "kubeconfig")
-                       }
-                  }
-        }
+        
     }
 }
